@@ -55,20 +55,17 @@ module.exports = class SpriteBrunch
 
         # Generate Styles when everything is done
         _when.all(alldone).then (sprites) =>
-          # Add Template
-          @addTemplate(@options.cssFormat)
-
           # Generate Functions
           styles = ''
           sprites.forEach (sprite) =>
+            console.log(sprite)
             formatOpts =
               sprites: true
               spriteImage: sprite.foldername
               spritePath: '../' + @options.path + '/' + sprite.imageFile
 
             styles += json2css(sprite.coordinates, { format: @options.cssFormat, formatOpts: formatOpts})
-          dummy_data = [{'name': 'github', 'x': 0, 'y': 0, 'width': 10, 'height': 20, 'total_width': 80, 'total_height': 100, 'image': 'spritesheet.png'}]
-          styles += json2css(dummy_data, { format: @options.cssFormat, formatOpts: {functions: true}})
+          console.log(styles)
           @writeStyles(styles)
 
   generateSprites: (files, foldername, format) ->
@@ -108,7 +105,7 @@ module.exports = class SpriteBrunch
         fs.writeFileSync(imageFilePath, result.image, 'binary')
 
       # Get coordinates and resolove, need all coordinates not only changed
-      done.resolve {coordinates: @processCoordinates(result.coordinates, foldername, imageFile), imageFile: imageFile, foldername: foldername}
+      done.resolve {coordinates: @processCoordinates(result.coordinates, foldername, imageFile, result.properties), imageFile: imageFile, foldername: foldername}
 
     # Return a promise
     done.promise
@@ -127,12 +124,7 @@ module.exports = class SpriteBrunch
       fs.writeFile spritePath, cssStr, 'utf8', (err) ->
         console.log('Could not write stylesheet, please make sure the path exists') if err
 
-  addTemplate: (template) ->
-    templatePath = sysPath.join __dirname, '..', 'templates', template + '.template.mustache'
-    currentTemplate = fs.readFileSync(templatePath, 'utf8');
-    json2css.addMustacheTemplate(template, currentTemplate);
-
-  processCoordinates: (coordinates, foldername, imageFile) ->
+  processCoordinates: (coordinates, foldername, imageFile, properties) ->
     new_coordinates = []
     Object.keys(coordinates).forEach (key) ->
       stylename = key.split '/'
@@ -140,6 +132,8 @@ module.exports = class SpriteBrunch
       stylename = stylename.replace(/\.[^/.]+$/, '')
       coordinates[key].image = imageFile
       coordinates[key].name  = stylename
+      coordinates[key].total_width = properties.width
+      coordinates[key].total_height = properties.height
       new_coordinates.push(coordinates[key])
       delete coordinates[ key ]
 
